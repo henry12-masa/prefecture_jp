@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>都道府県クイズ200問</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:sans-serif;background:#eef4ff;color:#222}
+header{background:#2563eb;color:white;text-align:center;padding:20px;font-size:32px;font-weight:bold}
+.layout{display:flex;justify-content:center;gap:20px;padding:20px}
+.ad-side{width:160px;min-height:600px;background:white;border-radius:14px;box-shadow:0 4px 12px #0002;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:bold;color:#777}
+.main{width:720px}
+.quiz-box,.bottom-ad,.final{background:white;border-radius:20px;padding:30px;box-shadow:0 8px 20px #0002;text-align:center}
+.bottom-ad{height:120px;margin-top:25px;display:flex;align-items:center;justify-content:center;font-size:26px;color:#777;font-weight:bold}
+.top-info{display:flex;justify-content:space-between;font-size:18px;font-weight:bold}
+.question{font-size:30px;font-weight:bold;margin:30px 0;line-height:1.5}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+.choices button{border:none;border-radius:14px;padding:18px;font-size:18px;cursor:pointer;background:#dbeafe;font-weight:bold}
+.choices button:hover{background:#93c5fd;transform:scale(1.03)}
+.correct{background:#22c55e!important;color:white}
+.wrong{background:#ef4444!important;color:white}
+.result{margin-top:25px;font-size:24px;font-weight:bold;min-height:40px}
+.final{display:none}
+.restart-btn{border:none;background:#2563eb;color:white;padding:16px 30px;border-radius:12px;font-size:20px;cursor:pointer}
+@media(max-width:1000px){
+.layout{flex-direction:column}
+.ad-side{width:100%;min-height:100px}
+.main{width:100%}
+.choices{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<header>日本の都道府県クイズ200問</header>
+
+<div class="layout">
+  <div class="ad-side">広告エリア</div>
+
+  <div class="main">
+    <div class="quiz-box" id="quizBox">
+      <div class="top-info">
+        <div>問題 <span id="questionNum">1</span>/30</div>
+        <div>スコア: <span id="score">0</span></div>
+      </div>
+
+      <div class="question" id="question"></div>
+      <div class="choices" id="choices"></div>
+      <div class="result" id="result"></div>
+    </div>
+
+    <div class="final" id="finalScreen">
+      <h2>クイズ終了！</h2>
+      <div class="score" id="finalScore"></div>
+      <button class="restart-btn" onclick="restartQuiz()">もう一度遊ぶ</button>
+    </div>
+
+    <div class="bottom-ad">広告エリア</div>
+  </div>
+
+  <div class="ad-side">広告エリア</div>
+</div>
+
+<script>
+const prefectures = [
+{p:"北海道",c:"札幌市",r:"北海道地方",s:"札幌時計台",f:"ジンギスカン"},
+{p:"青森県",c:"青森市",r:"東北地方",s:"ねぶた祭",f:"りんご"},
+{p:"岩手県",c:"盛岡市",r:"東北地方",s:"中尊寺金色堂",f:"わんこそば"},
+{p:"宮城県",c:"仙台市",r:"東北地方",s:"松島",f:"牛タン"},
+{p:"秋田県",c:"秋田市",r:"東北地方",s:"なまはげ",f:"きりたんぽ"},
+{p:"山形県",c:"山形市",r:"東北地方",s:"山寺",f:"さくらんぼ"},
+{p:"福島県",c:"福島市",r:"東北地方",s:"会津若松城",f:"喜多方ラーメン"},
+{p:"茨城県",c:"水戸市",r:"関東地方",s:"偕楽園",f:"納豆"},
+{p:"栃木県",c:"宇都宮市",r:"関東地方",s:"日光東照宮",f:"宇都宮餃子"},
+{p:"群馬県",c:"前橋市",r:"関東地方",s:"草津温泉",f:"焼きまんじゅう"},
+{p:"埼玉県",c:"さいたま市",r:"関東地方",s:"川越の蔵造り",f:"草加せんべい"},
+{p:"千葉県",c:"千葉市",r:"関東地方",s:"東京ディズニーリゾート",f:"落花生"},
+{p:"東京都",c:"新宿区",r:"関東地方",s:"東京タワー",f:"もんじゃ焼き"},
+{p:"神奈川県",c:"横浜市",r:"関東地方",s:"鎌倉大仏",f:"崎陽軒シウマイ"},
+{p:"新潟県",c:"新潟市",r:"中部地方",s:"佐渡島",f:"米"},
+{p:"富山県",c:"富山市",r:"中部地方",s:"黒部ダム",f:"ます寿司"},
+{p:"石川県",c:"金沢市",r:"中部地方",s:"兼六園",f:"金沢カレー"},
+{p:"福井県",c:"福井市",r:"中部地方",s:"東尋坊",f:"越前ガニ"},
+{p:"山梨県",c:"甲府市",r:"中部地方",s:"富士五湖",f:"ほうとう"},
+{p:"長野県",c:"長野市",r:"中部地方",s:"善光寺",f:"信州そば"},
+{p:"岐阜県",c:"岐阜市",r:"中部地方",s:"白川郷",f:"飛騨牛"},
+{p:"静岡県",c:"静岡市",r:"中部地方",s:"富士山",f:"静岡おでん"},
+{p:"愛知県",c:"名古屋市",r:"中部地方",s:"名古屋城",f:"味噌カツ"},
+{p:"三重県",c:"津市",r:"近畿地方",s:"伊勢神宮",f:"伊勢うどん"},
+{p:"滋賀県",c:"大津市",r:"近畿地方",s:"琵琶湖",f:"近江牛"},
+{p:"京都府",c:"京都市",r:"近畿地方",s:"清水寺",f:"八つ橋"},
+{p:"大阪府",c:"大阪市",r:"近畿地方",s:"大阪城",f:"たこ焼き"},
+{p:"兵庫県",c:"神戸市",r:"近畿地方",s:"姫路城",f:"明石焼き"},
+{p:"奈良県",c:"奈良市",r:"近畿地方",s:"東大寺",f:"柿の葉寿司"},
+{p:"和歌山県",c:"和歌山市",r:"近畿地方",s:"熊野古道",f:"梅干し"},
+{p:"鳥取県",c:"鳥取市",r:"中国地方",s:"鳥取砂丘",f:"梨"},
+{p:"島根県",c:"松江市",r:"中国地方",s:"出雲大社",f:"出雲そば"},
+{p:"岡山県",c:"岡山市",r:"中国地方",s:"後楽園",f:"きびだんご"},
+{p:"広島県",c:"広島市",r:"中国地方",s:"厳島神社",f:"お好み焼き"},
+{p:"山口県",c:"山口市",r:"中国地方",s:"錦帯橋",f:"ふぐ"},
+{p:"徳島県",c:"徳島市",r:"四国地方",s:"阿波おどり",f:"徳島ラーメン"},
+{p:"香川県",c:"高松市",r:"四国地方",s:"栗林公園",f:"讃岐うどん"},
+{p:"愛媛県",c:"松山市",r:"四国地方",s:"道後温泉",f:"みかん"},
+{p:"高知県",c:"高知市",r:"四国地方",s:"桂浜",f:"カツオのたたき"},
+{p:"福岡県",c:"福岡市",r:"九州地方",s:"太宰府天満宮",f:"博多ラーメン"},
+{p:"佐賀県",c:"佐賀市",r:"九州地方",s:"吉野ヶ里遺跡",f:"佐賀牛"},
+{p:"長崎県",c:"長崎市",r:"九州地方",s:"軍艦島",f:"ちゃんぽん"},
+{p:"熊本県",c:"熊本市",r:"九州地方",s:"熊本城",f:"馬刺し"},
+{p:"大分県",c:"大分市",r:"九州地方",s:"別府温泉",f:"とり天"},
+{p:"宮崎県",c:"宮崎市",r:"九州地方",s:"高千穂峡",f:"チキン南蛮"},
+{p:"鹿児島県",c:"鹿児島市",r:"九州地方",s:"桜島",f:"黒豚"},
+{p:"沖縄県",c:"那覇市",r:"沖縄地方",s:"首里城",f:"沖縄そば"}
+];
+
+const extraQuiz = [
+{q:"日本で面積が一番大きい都道府県は？",a:"北海道",c:["北海道","岩手県","長野県","福島県"]},
+{q:"日本で人口が一番多い都道府県は？",a:"東京都",c:["東京都","大阪府","神奈川県","愛知県"]},
+{q:"日本で一番南にある都道府県は？",a:"沖縄県",c:["沖縄県","鹿児島県","東京都","長崎県"]},
+{q:"富士山がまたがる都道府県は？",a:"静岡県・山梨県",c:["静岡県・山梨県","長野県・山梨県","静岡県・愛知県","岐阜県・長野県"]},
+{q:"琵琶湖がある都道府県は？",a:"滋賀県",c:["滋賀県","京都府","奈良県","三重県"]},
+{q:"東京ディズニーリゾートがある都道府県は？",a:"千葉県",c:["千葉県","東京都","神奈川県","埼玉県"]},
+{q:"USJがある都道府県は？",a:"大阪府",c:["大阪府","兵庫県","京都府","東京都"]},
+{q:"甲子園球場がある都道府県は？",a:"兵庫県",c:["兵庫県","大阪府","京都府","奈良県"]},
+{q:"出雲大社がある都道府県は？",a:"島根県",c:["島根県","鳥取県","岡山県","山口県"]},
+{q:"屋久島がある都道府県は？",a:"鹿児島県",c:["鹿児島県","沖縄県","宮崎県","熊本県"]},
+{q:"白川郷がある都道府県は？",a:"岐阜県",c:["岐阜県","富山県","長野県","石川県"]},
+{q:"知床がある都道府県は？",a:"北海道",c:["北海道","青森県","岩手県","秋田県"]}
+];
+
+function shuffle(array){
+  return array.sort(() => Math.random() - 0.5);
+}
+
+function makeChoices(correct,pool){
+  const wrongs = shuffle(pool.filter(x => x !== correct)).slice(0,3);
+  return shuffle([correct,...wrongs]);
+}
+
+const prefNames = prefectures.map(x=>x.p);
+const capitals = prefectures.map(x=>x.c);
+const regions = ["北海道地方","東北地方","関東地方","中部地方","近畿地方","中国地方","四国地方","九州地方","沖縄地方"];
+const foods = prefectures.map(x=>x.f);
+const spots = prefectures.map(x=>x.s);
+
+let quizData = [];
+
+prefectures.forEach(item=>{
+  quizData.push({
+    q:`${item.p}の県庁所在地は？`,
+    a:item.c,
+    c:makeChoices(item.c,capitals)
+  });
+
+  quizData.push({
+    q:`${item.p}は何地方にある？`,
+    a:item.r,
+    c:makeChoices(item.r,regions)
+  });
+
+  quizData.push({
+    q:`「${item.s}」がある都道府県は？`,
+    a:item.p,
+    c:makeChoices(item.p,prefNames)
+  });
+
+  quizData.push({
+    q:`「${item.f}」で有名な都道府県は？`,
+    a:item.p,
+    c:makeChoices(item.p,prefNames)
+  });
+});
+
+quizData = [...quizData, ...extraQuiz].slice(0,200);
+
+let currentQuestion = 0;
+let score = 0;
+const totalQuestions = 30;
+let shuffledQuiz = [];
+
+function startQuiz(){
+  shuffledQuiz = shuffle([...quizData]).slice(0,totalQuestions);
+  currentQuestion = 0;
+  score = 0;
+  document.getElementById("score").textContent = score;
+  showQuestion();
+}
+
+function showQuestion(){
+  const q = shuffledQuiz[currentQuestion];
+
+  document.getElementById("questionNum").textContent = currentQuestion + 1;
+  document.getElementById("question").textContent = q.q;
+  document.getElementById("result").textContent = "";
+
+  const choicesDiv = document.getElementById("choices");
+  choicesDiv.innerHTML = "";
+
+  shuffle([...q.c]).forEach(choice=>{
+    const btn = document.createElement("button");
+    btn.textContent = choice;
+    btn.onclick = () => checkAnswer(btn,choice,q.a);
+    choicesDiv.appendChild(btn);
+  });
+}
+
+function checkAnswer(button,selected,correct){
+  const buttons = document.querySelectorAll(".choices button");
+
+  buttons.forEach(btn=>{
+    btn.disabled = true;
+    if(btn.textContent === correct){
+      btn.classList.add("correct");
+    }
+  });
+
+  if(selected === correct){
+    score++;
+    document.getElementById("score").textContent = score;
+    document.getElementById("result").textContent = "正解！";
+    button.classList.add("correct");
+  }else{
+    document.getElementById("result").textContent = "不正解！ 正解は " + correct;
+    button.classList.add("wrong");
+  }
+
+  setTimeout(()=>{
+    currentQuestion++;
+    if(currentQuestion < totalQuestions){
+      showQuestion();
+    }else{
+      showFinal();
+    }
+  },1200);
+}
+
+function showFinal(){
+  document.getElementById("quizBox").style.display = "none";
+  document.getElementById("finalScreen").style.display = "block";
+  document.getElementById("finalScore").textContent =
+    totalQuestions + "問中 " + score + "問正解！";
+}
+
+function restartQuiz(){
+  document.getElementById("quizBox").style.display = "block";
+  document.getElementById("finalScreen").style.display = "none";
+  startQuiz();
+}
+
+console.log("総問題数:", quizData.length);
+
+startQuiz();
+</script>
+
+</body>
+</html>
